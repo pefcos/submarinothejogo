@@ -63,7 +63,7 @@
 #define VALOR_INIMIGO 50
 
 //VALORES REFERENTES AO RANKING
-#define RANKINGS 5
+#define RANKINGS 10
 #define TAMANHO_NOME 20
 
 typedef struct coordenada
@@ -154,7 +154,9 @@ int confirma_save();
 void salva_jogo(STATE save_state, char *nome_save, int load);
 void printbin(char *nome_save);
 void load_game(int *pontuacao, char *nome, SUBMARINO *jogador, MERGULHADOR *mergulhadores, INIMIGO *inimigos, MISSIL *misseis, int *erro);
-void carrega_ranking();
+void imprime_ranking();
+int carrega_ranking(char nomes[][TAMANHO_NOME], int *pontos);
+void salva_ranking(char jog_nome[TAMANHO_NOME], int jog_pontos);
 
 int main()
 {
@@ -190,7 +192,7 @@ void menu()
                 gameloop(1);
                 break;
             case RECORDES:
-                carrega_ranking();
+                imprime_ranking();
                 break;
             case CREDITOS:
                 creditos();
@@ -312,6 +314,10 @@ void gameloop(int load)
                 strcpy(save_state.nome, nome);
                 salva_jogo(save_state, nome, load);
             }
+        }
+        else
+        {
+            salva_ranking(nome,pontuacao);
         }
     }
 }
@@ -1046,19 +1052,43 @@ void load_game(int *pontuacao, char *nome, SUBMARINO *jogador, MERGULHADOR *merg
     }
 }
 
-void carrega_ranking()
+void imprime_ranking()
 {
-    FILE *arq;
-    char posicao[30];
     int pontos[RANKINGS] = {0};
     char nomes[RANKINGS][TAMANHO_NOME];
     int i = 0;
     background();
     gotoxy(1,1);
+    for(i = 0; i < RANKINGS; i++)
+    {
+        pontos[i] = 0;
+        strcpy(nomes[i]," ");
+    }
+    printf("RANKING:\n");
+    if(carrega_ranking(nomes, pontos) == 0)
+    {
+        for(i = 0; i < RANKINGS; i++)
+        {
+            printf("%s",nomes[i]);
+            gotoxy(TAMANHO_NOME+1,i+2);
+            printf("%d\n",pontos[i]);
+        }
+    }
+    else
+    {
+        printf("Erro ao ler ranking. Comum ocorrer em jogos novos.");
+    }
+    getchar();
+}
+
+int carrega_ranking(char nomes[][TAMANHO_NOME], int *pontos)
+{
+    FILE *arq;
+    char posicao[30];
+    int i = 0;
     arq = fopen("ranking.txt","r");
     if(arq != NULL)
     {
-
         if(fgets(posicao,sizeof(posicao),arq) != NULL)
         {
             strcpy(nomes[i], strtok(posicao,";"));
@@ -1071,21 +1101,54 @@ void carrega_ranking()
                 pontos[i] = atoi(strtok(NULL,";"));
                 i++;
             }
-            //imprime_ranking();
+            return 0;
         }
         else
         {
-            printf("Nenhum nome no ranking. Parece que todos os jogadores nao descobriram como jogar.\n");
-            printf("Mova o submarino com as setas. Atire com a barra de espaco.\n");
-            printf("Pegue os mergulhadores e traga-os para cima. Mas cuidado, 5 eh a capacidade maxima.\n");
-            printf("Bom jogo, tente fazer mais de 0 pontos agora :).\n");
-            getchar();
+            return 1;
         }
         fclose(arq);
     }
     else
     {
-        printf("Nao ha ranking salvo.");
+        return 1;
+    }
+}
+
+void salva_ranking(char jog_nome[TAMANHO_NOME], int jog_pontos)
+{
+    FILE *arq;
+    int pontos[RANKINGS] = {0};
+    char nomes[RANKINGS][TAMANHO_NOME];
+    int i = 0;
+    int posjog = 0;
+    for(i = 0; i < RANKINGS; i++)
+    {
+        pontos[i] = 0;
+        strcpy(nomes[i]," ");
+    }
+    carrega_ranking(nomes, pontos);
+    i = 0;
+    while(pontos[i] > jog_pontos && i < RANKINGS)
+    {
+        i++;
+    }
+    if(i < RANKINGS)
+    {
+        posjog = i;
+        for(i = RANKINGS-1; i > posjog; i--)
+        {
+            pontos[i] = pontos[i-1];
+            strcpy(nomes[i],nomes[i-1]);
+        }
         getchar();
+        pontos[i] = jog_pontos;
+        strcpy(nomes[i],jog_nome);
+        arq = fopen("ranking.txt","w");
+        for(i = 0; i < RANKINGS; i++)
+        {
+            fprintf(arq,"%s;%d;\n",nomes[i],pontos[i]);
+        }
+        fclose(arq);
     }
 }
