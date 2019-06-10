@@ -60,6 +60,11 @@
 
 //VALORES REFERENTES AO CALCULO DA PONTUACAO
 #define VALOR_MERGULHADOR 20
+#define VALOR_INIMIGO 50
+
+//VALORES REFERENTES AO RANKING
+#define RANKINGS 5
+#define TAMANHO_NOME 20
 
 typedef struct coordenada
 {
@@ -149,6 +154,7 @@ int confirma_save();
 void salva_jogo(STATE save_state, char *nome_save, int load);
 void printbin(char *nome_save);
 void load_game(int *pontuacao, char *nome, SUBMARINO *jogador, MERGULHADOR *mergulhadores, INIMIGO *inimigos, MISSIL *misseis, int *erro);
+void carrega_ranking();
 
 int main()
 {
@@ -182,6 +188,9 @@ void menu()
                 break;
             case CARREGA_JOGO:
                 gameloop(1);
+                break;
+            case RECORDES:
+                carrega_ranking();
                 break;
             case CREDITOS:
                 creditos();
@@ -1033,6 +1042,50 @@ void load_game(int *pontuacao, char *nome, SUBMARINO *jogador, MERGULHADOR *merg
     {
         printf("Erro ao ler arquivo.\n");
         *erro = 1;
+        getchar();
+    }
+}
+
+void carrega_ranking()
+{
+    FILE *arq;
+    char posicao[30];
+    int pontos[RANKINGS] = {0};
+    char nomes[RANKINGS][TAMANHO_NOME];
+    int i = 0;
+    background();
+    gotoxy(1,1);
+    arq = fopen("ranking.txt","r");
+    if(arq != NULL)
+    {
+
+        if(fgets(posicao,sizeof(posicao),arq) != NULL)
+        {
+            strcpy(nomes[i], strtok(posicao,";"));
+            pontos[i] = atoi(strtok(NULL,";"));
+            i++;
+            while(!feof(arq) && i < RANKINGS)
+            {
+                fgets(posicao,sizeof(posicao),arq);
+                strcpy(nomes[i], strtok(posicao,";"));
+                pontos[i] = atoi(strtok(NULL,";"));
+                i++;
+            }
+            //imprime_ranking();
+        }
+        else
+        {
+            printf("Nenhum nome no ranking. Parece que todos os jogadores nao descobriram como jogar.\n");
+            printf("Mova o submarino com as setas. Atire com a barra de espaco.\n");
+            printf("Pegue os mergulhadores e traga-os para cima. Mas cuidado, 5 eh a capacidade maxima.\n");
+            printf("Bom jogo, tente fazer mais de 0 pontos agora :).\n");
+            getchar();
+        }
+        fclose(arq);
+    }
+    else
+    {
+        printf("Nao ha ranking salvo.");
         getchar();
     }
 }
