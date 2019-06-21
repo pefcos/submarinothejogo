@@ -1,22 +1,31 @@
 /*
-    JOGO DO SUBMARINO
-    Feito por:
-        Pedro Fronchetti Costa da Silva
-        Tiago Dias Ferreira
-    Trabalho final da disciplina de Algoritmos e Programação, turma C do semestre 2019/1.
-*/
+ * submarino, the jogo
+ * por pedro fronchetti costa da silva e tiago dias ferreira
+ *
+ * universidade federal do rio grande do sul
+ * instituto de informatica
+ * disciplina de algoritmos e programação - inf021202
+ * professora dra mara abel
+ * turma c 2019/1
+ */
 
+/* bibliotecas utilizadas */
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio2.h>
 #include <time.h>
 #include <windows.h>
 
-//VALORES REFERENTES A CORES
-#define FUNDO 15
-#define FRENTE 1
+/* valores referentes as cores */
+#define CORFUNDO 15
+#define CORFRENTE 0
+#define CORMERGULHADOR 5
+#define CORSUBMARINO 4
+#define CORAGUA 9
+#define CORTORPEDO 2
+#define CORINIMIGO 8
 
-//VALORES REFERENTES AO MENU
+/* valores referentes ao menu */
 #define TOPOPTION 18
 #define BOTOPTION 22
 #define NOVO_JOGO 18
@@ -25,17 +34,17 @@
 #define RECORDES 21
 #define SAIR 22
 
-//VALOR DO SLEEP NO GAMELOOP
+/* valores do sleep no gameloop */
 #define SLEEP 38
 
-//VALORES REFERENTES AOS LIMITES DO BACKGROUND
-#define LIMCIMA 2
+/* valores referentes aos limites do background */
+#define LIMCIMA 3
 #define LIMBAIXO 25
 #define LIMDIR 80
 #define LIMESQ 1
 #define LIMAGUA 6
 
-//VALORES REFERENTES AO CODIGO DAS TECLAS IMPORTANTES DO TECLADO
+/* valores referentes as teclas do teclado */
 #define DIREITA 77
 #define ESQUERDA 75
 #define CIMA 72
@@ -43,77 +52,107 @@
 #define ESC 27
 #define ESPACO 32
 
-//VALORES REFERENTES A QUANTIDADE DE OBSTACULOS
+/* valores referentes as quantidades de obstaculos */
 #define MERGULHADORES 5
 #define INIMIGOS 4
 
-//VALORES REFERENTES A POSICAO INICIAL DO SUBMARINO
+/* valores referentes a posicao inicial do submarino */
 #define XINI 35
 #define YINI 4
 
-//VALORES REFERENTES A PROPRIEDADES DO SUBMARINO
+/* valores referentes as propriedades do submarino */
 #define OXIGENIOMAX 3000
 #define OXIGENIOVAR 4
 #define VIDAS 3
-#define MISSEIS 2
+#define TORPEDOS 2
 #define CARGA 5
 
-//VALORES REFERENTES AO CALCULO DA PONTUACAO
+/* valores referentes ao calculo da pontuacao */
 #define VALOR_MERGULHADOR 20
 #define VALOR_INIMIGO 50
 
-//VALORES REFERENTES AO RANKING
+/* valores referentes ao ranking */
 #define RANKINGS 10
 #define TAMANHO_NOME 20
 
+/*
+ * estrutura: coordenada
+ * ---------------------
+ * coordenadas dos objetos na tela do jogo
+ */
 typedef struct coordenada
 {
-    int x, y;
-}COORDENADA;
+    int x; /* coordenada x */
+    int y; /* coordenada y */
+} COORDENADA;
 
+/*
+ * estrutura: submarino
+ * ---------------------
+ * parametros do submarino do jogador
+ */
 typedef struct submarino
 {
-    //se_pos eh usado para definir a coordenada do canto superior esquerdo do submarino.
-    COORDENADA se_pos;
-    int sentido;
-    int altura;
-    int largura;
-    int oxigenio;
-    int vidas; //O jogador esta morto quando nao possui mais vidas (isto eh, quando o valor de vidas for 0);
-    int carga;
-}SUBMARINO;
+    COORDENADA se_pos; /* posicao do canto superior esquerdo do submarino */
+    int sentido;       /* sentido para qual o submarino aponta */
+    int altura;        /* altura, em linhas, do submarino */
+    int largura;       /* largura, em colunas, do submarino */
+    int oxigenio;      /* quantidade maxima e inicial de oxigenio */
+    int vidas;         /* quantidade maxima e inicial de vidas */
+    int carga;         /* quantidade de margulhadores dentro do submarino */
+} SUBMARINO;
 
+/*
+ * estrutura: mergulhador
+ * ---------------------
+ * parametros dos mergulhadores
+ */
 typedef struct mergulhador
 {
-    COORDENADA se_pos;
-    int largura;//4 por padrao, pois ele eh desenhado assim >->o / o<-<, ocupando 4 digitos.
-    int status;//1: Andando pra direita, 0: Fora da tela, -1: Andando pra esquerda.
-}MERGULHADOR;
+    COORDENADA se_pos; /* posicao do canto superior esquerdo do mergulhador */
+    int largura;       /* altura, em linhas, do mergulhador */
+    int status;        /* status do mergulhador */
+} MERGULHADOR;
 
+/*
+ * estrutura: inimigo
+ * ---------------------
+ * parametros dos submarinos inimigos
+ */
 typedef struct inimigo
 {
-    COORDENADA se_pos;
-    int largura;
-    int altura;
-    int status;
-}INIMIGO;
+    COORDENADA se_pos; /* posicao do canto superior esquerdo do inimigo */
+    int altura;        /* altura, em linhas, do inimigo */
+    int largura;       /* largura, em colunas, do inimigo */
+    int status;        /* status do inimigo */
+} INIMIGO;
 
-typedef struct missil
+/*
+ * estrutura: torpedo
+ * ---------------------
+ * parametros dos torpedos lançados
+ */
+typedef struct torpedo
 {
-    COORDENADA se_pos;
-    int largura;
-    int status;
-}MISSIL;
+    COORDENADA se_pos; /* posicao do canto superior esquerdo do torpedo */
+    int largura;       /* largura, em colunas, do torpedo */
+    int status;        /* status do torpedo */
+} TORPEDO;
 
+/*
+ * estrutura: state
+ * ---------------------
+ * guarda estados do jogo para permitir carregamento posterior
+ */
 typedef struct state
 {
-    SUBMARINO jogador;
-    MERGULHADOR mergulhadores[MERGULHADORES];
-    INIMIGO inimigos[INIMIGOS];
-    MISSIL misseis[MISSEIS];
-    int pontuacao;
-    char nome[20];
-}STATE;
+    SUBMARINO jogador;                        /* estado do jogador */
+    MERGULHADOR mergulhadores[MERGULHADORES]; /* estado dos mergulhadores */
+    INIMIGO inimigos[INIMIGOS];               /* estado dos inimigos */
+    TORPEDO torpedos[TORPEDOS];               /* estado dos torpedos */
+    int pontuacao;                            /* pontuacao do jogador */
+    char nome[TAMANHO_NOME];                  /* nome do jogador */
+} STATE;
 
 void menu();
 void desenha_menu();
@@ -127,25 +166,25 @@ void tela_inicial(char *nome);
 void tela_jogo();
 void desenha_jogador(SUBMARINO jogador);
 void apaga_jogador(SUBMARINO jogador);
-void move_jogador(int *input, SUBMARINO *jogador, MISSIL *misseis);
+void move_jogador(int *input, SUBMARINO *jogador, TORPEDO *torpedos);
 int testa_posicao_megulhador(SUBMARINO jogador, MERGULHADOR mergulhador);
 int testa_posicao_inimigo(SUBMARINO jogador, INIMIGO inimigo);
 void pega_mergulhador(SUBMARINO *jogador, MERGULHADOR *mergulhadores);
 void destroi_jogador(SUBMARINO *jogador);
 void colide_inimigo(SUBMARINO *jogador, INIMIGO *inimigos);
-void colide_missil(MISSIL *misseis, INIMIGO *inimigos, int *pontuacao);
+void colide_torpedo(TORPEDO *torpedos, INIMIGO *inimigos, int *pontuacao);
 void inicializa_mergulhadores(MERGULHADOR *mergulhadores, INIMIGO *inimigos);
 void inicializa_inimigos(INIMIGO *inimigos, MERGULHADOR *mergulhadores);
-void atira_missil(MISSIL *misseis, SUBMARINO jogador);
+void atira_torpedo(TORPEDO *torpedos, SUBMARINO jogador);
 void desenha_mergulhador(MERGULHADOR mergulhador);
 void desenha_inimigo(INIMIGO inimigo);
-void desenha_missil(MISSIL missil);
+void desenha_torpedo(TORPEDO torpedo);
 void apaga_mergulhador(MERGULHADOR mergulhador);
 void apaga_inimigo(INIMIGO inimigo);
-void apaga_missil(MISSIL missil);
+void apaga_torpedo(TORPEDO torpedo);
 void move_mergulhador(MERGULHADOR *mergulhadores);
 void move_inimigo(INIMIGO *inimigos);
-void move_missil(MISSIL *misseis);
+void move_torpedo(TORPEDO *torpedos);
 int verifica_vidas(SUBMARINO jogador); //Retorna 1 se o jogador esta vivo e 0 se ele esta morto.
 void devolve_mergulhadores(SUBMARINO *jogador, int *pontuacao);
 void ponto_aquatico(SUBMARINO jogador, int *pontuacao, int *contador); //Conta ponto pra cada segundo submerso.
@@ -153,7 +192,7 @@ void creditos();
 int confirma_save();
 void salva_jogo(STATE save_state, char *nome_save, int load);
 void printbin(char *nome_save);
-void load_game(int *pontuacao, char *nome, SUBMARINO *jogador, MERGULHADOR *mergulhadores, INIMIGO *inimigos, MISSIL *misseis, int *erro);
+void load_game(int *pontuacao, char *nome, SUBMARINO *jogador, MERGULHADOR *mergulhadores, INIMIGO *inimigos, TORPEDO *torpedos, int *erro);
 void imprime_ranking();
 int carrega_ranking(char nomes[][TAMANHO_NOME], int *pontos);
 void salva_ranking(char jog_nome[TAMANHO_NOME], int jog_pontos);
@@ -168,7 +207,7 @@ void menu()
     int menu_cursor = TOPOPTION;
     int menu_input = 0;
     int endgame = 0;
-    char nome[20] = " ";
+    char nome[TAMANHO_NOME] = " ";
     while(endgame == 0)
     {
         menu_cursor = TOPOPTION;
@@ -182,21 +221,21 @@ void menu()
         }
         switch(menu_cursor)
         {
-            case SAIR:
-                endgame = 1;
-                break;
-            case NOVO_JOGO:
-                gameloop(0);
-                break;
-            case CARREGA_JOGO:
-                gameloop(1);
-                break;
-            case RECORDES:
-                imprime_ranking();
-                break;
-            case CREDITOS:
-                creditos();
-                break;
+        case SAIR:
+            endgame = 1;
+            break;
+        case NOVO_JOGO:
+            gameloop(0);
+            break;
+        case CARREGA_JOGO:
+            gameloop(1);
+            break;
+        case RECORDES:
+            imprime_ranking();
+            break;
+        case CREDITOS:
+            creditos();
+            break;
         }
     }
 }
@@ -209,19 +248,19 @@ void move_cursor_menu(int *menu_input, int *menu_cursor)
         *menu_input = getch();
         switch(*menu_input)
         {
-            case BAIXO:
-                if(*menu_cursor != BOTOPTION)
-                {
-                    (*menu_cursor)++;
-                    gotoxy(18, *menu_cursor);
-                }
-                break;
-            case CIMA:
-                if(*menu_cursor != TOPOPTION)
-                {
-                    (*menu_cursor)--;
-                    gotoxy(18, *menu_cursor);
-                }
+        case BAIXO:
+            if(*menu_cursor != BOTOPTION)
+            {
+                (*menu_cursor)++;
+                gotoxy(18, *menu_cursor);
+            }
+            break;
+        case CIMA:
+            if(*menu_cursor != TOPOPTION)
+            {
+                (*menu_cursor)--;
+                gotoxy(18, *menu_cursor);
+            }
         }
     }
 }
@@ -255,13 +294,13 @@ void gameloop(int load)
 
     SUBMARINO jogador = {{XINI,YINI},1,2,12,OXIGENIOMAX,VIDAS,0};
     MERGULHADOR mergulhadores[MERGULHADORES] = {{{0,0},4,0},{{0,0},4,0},{{0,0},4,0},{{0,0},4,0},{{0,0},4,0}};
-    INIMIGO inimigos[INIMIGOS] = {{{0,0},9,2,0},{{0,0},9,2,0},{{0,0},9,2,0},{{0,0},9,2,0}};
-    MISSIL misseis[MISSEIS] = {{{0,0},2,0},{{0,0},2,0}};
+    INIMIGO inimigos[INIMIGOS] = {{{0,0},2,9,0},{{0,0},2,9,0},{{0,0},2,9,0},{{0,0},2,9,0}};
+    TORPEDO torpedos[TORPEDOS] = {{{0,0},2,0},{{0,0},2,0}};
 
     background();
     if(load == 1)
     {
-        load_game(&pontuacao, nome, &jogador, mergulhadores, inimigos, misseis, &erro);
+        load_game(&pontuacao, nome, &jogador, mergulhadores, inimigos, torpedos, &erro);
     }
     else
     {
@@ -279,16 +318,16 @@ void gameloop(int load)
             atualiza_oxigenio(&jogador);
             inicializa_mergulhadores(mergulhadores, inimigos);
             inicializa_inimigos(inimigos, mergulhadores);
-            move_jogador(&input, &jogador, misseis);
+            move_jogador(&input, &jogador, torpedos);
             Sleep(SLEEP);
             move_mergulhador(mergulhadores);
             move_inimigo(inimigos);
-            move_missil(misseis);
+            move_torpedo(torpedos);
             pega_mergulhador(&jogador, mergulhadores);
             devolve_mergulhadores(&jogador, &pontuacao);
             ponto_aquatico(jogador,&pontuacao, &contador);
             colide_inimigo(&jogador, inimigos);
-            colide_missil(misseis, inimigos, &pontuacao);
+            colide_torpedo(torpedos, inimigos, &pontuacao);
             mostra_interface(pontuacao, jogador);
         }
         while (input != ESC && verifica_vidas(jogador));
@@ -306,9 +345,9 @@ void gameloop(int load)
                 {
                     save_state.inimigos[i] = inimigos[i];
                 }
-                for(i = 0; i < MISSEIS; i++)
+                for(i = 0; i < TORPEDOS; i++)
                 {
-                    save_state.misseis[i] = misseis[i];
+                    save_state.torpedos[i] = torpedos[i];
                 }
                 save_state.pontuacao = pontuacao;
                 strcpy(save_state.nome, nome);
@@ -328,29 +367,59 @@ void background()
     for (i = 0; i <= 25; i++)
         for (j = 0; j <= 80; j++)
         {
-            textbackground(FUNDO);
-            textcolor(FRENTE);
+            textbackground(CORFUNDO);
+            textcolor(CORFRENTE);
             putchxy(j, i, ' ');
         }
 }
 
 void desenha_agua()
 {
+    textcolor(CORAGUA);
     int i = 0;
     for(i = LIMESQ+1; i < LIMDIR; i++)
     {
-        putchxy(i,LIMAGUA,'~');
+        gotoxy(i,LIMAGUA);
+        printf("%c", 247);
     }
+    textcolor(CORFRENTE);
 }
 
 void mostra_interface(int pontuacao, SUBMARINO jogador)
 {
-    gotoxy(1, 1);
-    printf("Pontuacao: %i", pontuacao);
-    gotoxy(1, LIMBAIXO + 1);
-    printf("Oxigenio: %d   \n", jogador.oxigenio);
-    printf("Vidas: %d \n", jogador.vidas);
-    printf("Mergulhadores Pegos: %d \n", jogador.carga);
+    int i;
+    gotoxy(2, 2);
+    printf("Pontos: %i", pontuacao);
+    gotoxy(19, 2);
+    printf("Oxigenio:  ");
+    switch(jogador.oxigenio / 150)
+    {
+        case 20: printf("||||||||||||||||||||"); break;
+        case 19: printf("||||||||||||||||||| "); break;
+        case 18: printf("||||||||||||||||||  "); break;
+        case 17: printf("|||||||||||||||||   "); break;
+        case 16: printf("||||||||||||||||    "); break;
+        case 15: printf("|||||||||||||||     "); break;
+        case 14: printf("||||||||||||||      "); break;
+        case 13: printf("|||||||||||||       "); break;
+        case 12: printf("||||||||||||        "); break;
+        case 11: printf("|||||||||||         "); break;
+        case 10: printf("||||||||||          "); break;
+        case 9: printf("|||||||||            "); break;
+        case 8: printf("||||||||             "); break;
+        case 7: printf("|||||||              "); break;
+        case 6: printf("||||||               "); break;
+        case 5: printf("|||||                "); break;
+        case 4: printf("||||                 "); break;
+        case 3: printf("|||                  "); break;
+        case 2: printf("||                   "); break;
+        case 1: printf("|                    "); break;
+        case 0: printf("                     "); break;
+    }
+    gotoxy(53, 2);
+    printf("Vidas: %d", jogador.vidas);
+    gotoxy(64, 2);
+    printf("Capacidade: %d/%d", jogador.carga, CARGA);
 }
 
 void atualiza_oxigenio(SUBMARINO *jogador)
@@ -382,30 +451,76 @@ void tela_inicial(char *nome)
     printf("Insira um nome aqui.");
     gotoxy(30, 11);
     gets(nome);
+    if (strcmp(nome, "") == 0)
+        strcpy(nome, "jogador");
     clrscr();
 }
 
 void tela_jogo()
 {
-    int i, j;
+    int i;
 
-    for (i = LIMCIMA; i <= LIMBAIXO; i++)
-        for (j = LIMESQ; j <= LIMDIR; j++)
-        {
-            if (i > LIMCIMA && i < LIMBAIXO)
-            {
-                putchxy(LIMESQ, i, '|');
-                putchxy(LIMDIR, i, '|');
-            }
-            else
-            {
-                putchxy(j, i, '-');
-            }
-        }
+    for(i = LIMESQ + 1; i < LIMDIR; i++)
+    {
+        gotoxy(i, 1);
+        printf("%c", 205);
+        gotoxy(i, LIMCIMA);
+        printf("%c", 205);
+        gotoxy(i, LIMBAIXO);
+        printf("%c", 205);
+    }
+    for(i = LIMCIMA + 1; i < LIMBAIXO; i++)
+    {
+        gotoxy(LIMESQ, i);
+        printf("%c", 186);
+        gotoxy(LIMDIR, i);
+        printf("%c", 186);
+    }
+
+    gotoxy(LIMESQ, 2);
+    printf("%c", 186);
+
+    gotoxy(17, 1);
+    printf("%c", 203);
+    gotoxy(17, 2);
+    printf("%c", 186);
+    gotoxy(17, 3);
+    printf("%c", 202);
+
+    gotoxy(51, 1);
+    printf("%c", 203);
+    gotoxy(51, 2);
+    printf("%c", 186);
+    gotoxy(51, 3);
+    printf("%c", 202);
+
+    gotoxy(62, 1);
+    printf("%c", 203);
+    gotoxy(62, 2);
+    printf("%c", 186);
+    gotoxy(62, 3);
+    printf("%c", 202);
+
+    gotoxy(LIMDIR, 2);
+    printf("%c", 186);
+
+    gotoxy(1, 1);
+    printf("%c", 201);
+    gotoxy(LIMDIR, 1);
+    printf("%c", 187);
+    gotoxy(LIMESQ, LIMCIMA);
+    printf("%c", 204);
+    gotoxy(LIMDIR, LIMCIMA);
+    printf("%c", 185);
+    gotoxy(LIMESQ, LIMBAIXO);
+    printf("%c", 200);
+    gotoxy(LIMDIR, LIMBAIXO);
+    printf("%c", 188);
 }
 
 void desenha_jogador(SUBMARINO jogador)
 {
+    textcolor(CORSUBMARINO);
     if(jogador.sentido == 1)
     {
         cputsxy(jogador.se_pos.x, jogador.se_pos.y,    " ___|==|___ ");
@@ -416,6 +531,7 @@ void desenha_jogador(SUBMARINO jogador)
         cputsxy(jogador.se_pos.x, jogador.se_pos.y,    " ___|==|___ ");
         cputsxy(jogador.se_pos.x, jogador.se_pos.y + 1,"(__________|");
     }
+    textcolor(CORFRENTE);
 }
 
 void apaga_jogador(SUBMARINO jogador)
@@ -424,7 +540,7 @@ void apaga_jogador(SUBMARINO jogador)
     cputsxy(jogador.se_pos.x, jogador.se_pos.y + 1,"            ");
 }
 
-void move_jogador(int *input, SUBMARINO *jogador, MISSIL *misseis)
+void move_jogador(int *input, SUBMARINO *jogador, TORPEDO *torpedos)
 {
     if (kbhit())
     {
@@ -432,47 +548,47 @@ void move_jogador(int *input, SUBMARINO *jogador, MISSIL *misseis)
         *input = getch();
         switch (*input)
         {
-            case CIMA:
-                if ((*jogador).se_pos.y > LIMAGUA - 2)
-                {
-                    apaga_jogador(*jogador);
-                    (*jogador).se_pos.y--;
-                    desenha_jogador(*jogador);
-                }
-                break;
-            case BAIXO:
-                if ((*jogador).se_pos.y < LIMBAIXO - 2)
-                {
-                    apaga_jogador(*jogador);
-                    (*jogador).se_pos.y++;
-                    desenha_jogador(*jogador);
-                }
-                break;
-            case DIREITA:
-                if ((*jogador).se_pos.x+(*jogador).largura < LIMDIR)
-                {
-                    apaga_jogador(*jogador);
-                    (*jogador).se_pos.x++;
-                    (*jogador).sentido = 1;
-                    desenha_jogador(*jogador);
-                }
-                break;
-            case ESQUERDA:
-                if ((*jogador).se_pos.x > LIMESQ + 1)
-                {
-                    apaga_jogador(*jogador);
-                    (*jogador).se_pos.x--;
-                    (*jogador).sentido = -1;
-                    desenha_jogador(*jogador);
-                }
-                break;
-            case ESPACO:
-                atira_missil(misseis, *jogador);
-                if(!(((*jogador).se_pos.x <= LIMESQ + 1 + misseis[0].largura) && (*jogador).sentido == 1) && !(((*jogador).se_pos.x+(*jogador).largura+misseis[0].largura >= LIMDIR) && (*jogador).sentido == -1))
-                {
+        case CIMA:
+            if ((*jogador).se_pos.y > LIMAGUA - 2)
+            {
+                apaga_jogador(*jogador);
+                (*jogador).se_pos.y--;
+                desenha_jogador(*jogador);
+            }
+            break;
+        case BAIXO:
+            if ((*jogador).se_pos.y < LIMBAIXO - 2)
+            {
+                apaga_jogador(*jogador);
+                (*jogador).se_pos.y++;
+                desenha_jogador(*jogador);
+            }
+            break;
+        case DIREITA:
+            if ((*jogador).se_pos.x+(*jogador).largura < LIMDIR)
+            {
+                apaga_jogador(*jogador);
+                (*jogador).se_pos.x++;
+                (*jogador).sentido = 1;
+                desenha_jogador(*jogador);
+            }
+            break;
+        case ESQUERDA:
+            if ((*jogador).se_pos.x > LIMESQ + 1)
+            {
+                apaga_jogador(*jogador);
+                (*jogador).se_pos.x--;
+                (*jogador).sentido = -1;
+                desenha_jogador(*jogador);
+            }
+            break;
+        case ESPACO:
+            atira_torpedo(torpedos, *jogador);
+            if(!(((*jogador).se_pos.x <= LIMESQ + 1 + torpedos[0].largura) && (*jogador).sentido == 1) && !(((*jogador).se_pos.x+(*jogador).largura+torpedos[0].largura >= LIMDIR) && (*jogador).sentido == -1))
+            {
 
-                }
-                break;
+            }
+            break;
         }
         if((*jogador).se_pos.y >= LIMAGUA-2 && (*jogador).se_pos.y <= LIMAGUA+1)
         {
@@ -505,13 +621,13 @@ int testa_posicao_inimigo(SUBMARINO jogador, INIMIGO inimigo)
     return 0;
 }
 
-int testa_posicao_missil(MISSIL missil, INIMIGO inimigo)
+int testa_posicao_torpedo(TORPEDO torpedo, INIMIGO inimigo)
 {
-    if((missil.se_pos.x + missil.largura >= inimigo.se_pos.x) && (missil.se_pos.x <= inimigo.se_pos.x + inimigo.largura))
+    if((torpedo.se_pos.x + torpedo.largura >= inimigo.se_pos.x) && (torpedo.se_pos.x <= inimigo.se_pos.x + inimigo.largura))
     {
-        if((missil.se_pos.y == inimigo.se_pos.y) || (missil.se_pos.y == inimigo.se_pos.y + 1))
+        if((torpedo.se_pos.y == inimigo.se_pos.y) || (torpedo.se_pos.y == inimigo.se_pos.y + 1))
         {
-            if((missil.status != 0 && inimigo.status != 0))
+            if((torpedo.status != 0 && inimigo.status != 0))
             {
                 return 1;
             }
@@ -565,20 +681,20 @@ void colide_inimigo(SUBMARINO *jogador, INIMIGO *inimigos)
     }
 }
 
-void colide_missil(MISSIL *misseis, INIMIGO *inimigos, int *pontuacao)
+void colide_torpedo(TORPEDO *torpedos, INIMIGO *inimigos, int *pontuacao)
 {
     int i;
     int j;
-    for (i = 0; i < MISSEIS; i++)
+    for (i = 0; i < TORPEDOS; i++)
     {
         for(j = 0; j < INIMIGOS; j++)
         {
-            if (testa_posicao_missil(misseis[i], inimigos[j]) == 1)
+            if (testa_posicao_torpedo(torpedos[i], inimigos[j]) == 1)
             {
-                apaga_missil(misseis[i]);
-                misseis[i].se_pos.x = 0;
-                misseis[i].se_pos.y = 0;
-                misseis[i].status = 0;
+                apaga_torpedo(torpedos[i]);
+                torpedos[i].se_pos.x = 0;
+                torpedos[i].se_pos.y = 0;
+                torpedos[i].status = 0;
                 apaga_inimigo(inimigos[j]);
                 inimigos[j].se_pos.x = 0;
                 inimigos[j].se_pos.y = 0;
@@ -647,7 +763,7 @@ void inicializa_inimigos(INIMIGO *inimigos, MERGULHADOR *mergulhadores)
         chance = rand() % 3;
         if (inimigos[i].status == 0 && chance == 1)
         {
-           inimigos[i].status = (rand () % 3) - 1;
+            inimigos[i].status = (rand () % 3) - 1;
             if(inimigos[i].status == -1)
             {
                 inimigos[i].se_pos.x = LIMDIR - inimigos[i].largura;
@@ -685,25 +801,25 @@ void inicializa_inimigos(INIMIGO *inimigos, MERGULHADOR *mergulhadores)
             desenha_inimigo(inimigos[i]);
 }
 
-void atira_missil(MISSIL *misseis, SUBMARINO jogador)
+void atira_torpedo(TORPEDO *torpedos, SUBMARINO jogador)
 {
     int i = 0;
     int find = 0;
     if(jogador.se_pos.y >= LIMAGUA)
     {
-        while(find == 0 && i < MISSEIS)
+        while(find == 0 && i < TORPEDOS)
         {
-            if(misseis[i].status == 0)
+            if(torpedos[i].status == 0)
             {
-                misseis[i].status = jogador.sentido;
-                misseis[i].se_pos.y = jogador.se_pos.y + 1;
-                if(misseis[i].status == 1)
+                torpedos[i].status = jogador.sentido;
+                torpedos[i].se_pos.y = jogador.se_pos.y + 1;
+                if(torpedos[i].status == 1)
                 {
-                    misseis[i].se_pos.x = jogador.se_pos.x + jogador.largura;
+                    torpedos[i].se_pos.x = jogador.se_pos.x + jogador.largura;
                 }
                 else
                 {
-                    misseis[i].se_pos.x = jogador.se_pos.x - misseis[i].largura;
+                    torpedos[i].se_pos.x = jogador.se_pos.x - torpedos[i].largura;
                 }
                 find = 1;
             }
@@ -714,6 +830,7 @@ void atira_missil(MISSIL *misseis, SUBMARINO jogador)
 
 void desenha_mergulhador(MERGULHADOR mergulhador)
 {
+    textcolor(CORMERGULHADOR);
     if(mergulhador.status == 1)
     {
         cputsxy(mergulhador.se_pos.x, mergulhador.se_pos.y, ">->o");
@@ -722,10 +839,12 @@ void desenha_mergulhador(MERGULHADOR mergulhador)
     {
         cputsxy(mergulhador.se_pos.x, mergulhador.se_pos.y, "o<-<");
     }
+    textcolor(CORFRENTE);
 }
 
 void desenha_inimigo(INIMIGO inimigo)
 {
+    textcolor(CORINIMIGO);
     if(inimigo.status == 1)
     {
         cputsxy(inimigo.se_pos.x, inimigo.se_pos.y,   " __|=\\___");
@@ -736,18 +855,21 @@ void desenha_inimigo(INIMIGO inimigo)
         cputsxy(inimigo.se_pos.x, inimigo.se_pos.y,    "___/=|__ ");
         cputsxy(inimigo.se_pos.x, inimigo.se_pos.y+1, "\\_______|");
     }
+    textcolor(CORFRENTE);
 }
 
-void desenha_missil(MISSIL missil)
+void desenha_torpedo(TORPEDO torpedo)
 {
-    if(missil.status == 1)
+    textcolor(CORTORPEDO);
+    if(torpedo.status == 1)
     {
-        cputsxy(missil.se_pos.x, missil.se_pos.y, "=>");
+        cputsxy(torpedo.se_pos.x, torpedo.se_pos.y, "=>");
     }
     else
     {
-        cputsxy(missil.se_pos.x, missil.se_pos.y, "<=");
+        cputsxy(torpedo.se_pos.x, torpedo.se_pos.y, "<=");
     }
+    textcolor(CORFRENTE);
 }
 
 void apaga_mergulhador(MERGULHADOR mergulhador)
@@ -761,9 +883,9 @@ void apaga_inimigo(INIMIGO inimigo)
     cputsxy(inimigo.se_pos.x, inimigo.se_pos.y+1, "         ");
 }
 
-void apaga_missil(MISSIL missil)
+void apaga_torpedo(TORPEDO torpedo)
 {
-    cputsxy(missil.se_pos.x, missil.se_pos.y, "  ");
+    cputsxy(torpedo.se_pos.x, torpedo.se_pos.y, "  ");
 }
 
 void move_mergulhador(MERGULHADOR *mergulhadores)
@@ -773,36 +895,36 @@ void move_mergulhador(MERGULHADOR *mergulhadores)
     {
         switch(mergulhadores[i].status)
         {
-            case 1:
-                if (mergulhadores[i].se_pos.x < LIMDIR - mergulhadores[i].largura)
-                {
-                    apaga_mergulhador(mergulhadores[i]);
-                    mergulhadores[i].se_pos.x++;
-                    desenha_mergulhador(mergulhadores[i]);
-                }
-                else if (mergulhadores[i].se_pos.x == LIMDIR - mergulhadores[i].largura)
-                {
-                    apaga_mergulhador(mergulhadores[i]);
-                    mergulhadores[i].se_pos.x = 0;
-                    mergulhadores[i].se_pos.y = 0;
-                    mergulhadores[i].status = 0;
-                }
-                break;
-            case -1:
-                if(mergulhadores[i].se_pos.x > LIMESQ + 2)
-                {
-                    apaga_mergulhador(mergulhadores[i]);
-                    mergulhadores[i].se_pos.x--;
-                    desenha_mergulhador(mergulhadores[i]);
-                }
-                else if (mergulhadores[i].se_pos.x == LIMESQ + 2)
-                {
-                    apaga_mergulhador(mergulhadores[i]);
-                    mergulhadores[i].se_pos.x = 0;
-                    mergulhadores[i].se_pos.y = 0;
-                    mergulhadores[i].status = 0;
-                }
-                break;
+        case 1:
+            if (mergulhadores[i].se_pos.x < LIMDIR - mergulhadores[i].largura)
+            {
+                apaga_mergulhador(mergulhadores[i]);
+                mergulhadores[i].se_pos.x++;
+                desenha_mergulhador(mergulhadores[i]);
+            }
+            else if (mergulhadores[i].se_pos.x == LIMDIR - mergulhadores[i].largura)
+            {
+                apaga_mergulhador(mergulhadores[i]);
+                mergulhadores[i].se_pos.x = 0;
+                mergulhadores[i].se_pos.y = 0;
+                mergulhadores[i].status = 0;
+            }
+            break;
+        case -1:
+            if(mergulhadores[i].se_pos.x > LIMESQ + 2)
+            {
+                apaga_mergulhador(mergulhadores[i]);
+                mergulhadores[i].se_pos.x--;
+                desenha_mergulhador(mergulhadores[i]);
+            }
+            else if (mergulhadores[i].se_pos.x == LIMESQ + 2)
+            {
+                apaga_mergulhador(mergulhadores[i]);
+                mergulhadores[i].se_pos.x = 0;
+                mergulhadores[i].se_pos.y = 0;
+                mergulhadores[i].status = 0;
+            }
+            break;
         }
     }
 }
@@ -814,77 +936,77 @@ void move_inimigo(INIMIGO *inimigos)
     {
         switch(inimigos[i].status)
         {
-            case 1:
-                if (inimigos[i].se_pos.x < LIMDIR - inimigos[i].largura)
-                {
-                    apaga_inimigo(inimigos[i]);
-                    inimigos[i].se_pos.x++;
-                    desenha_inimigo(inimigos[i]);
-                }
-                else if (inimigos[i].se_pos.x == LIMDIR - inimigos[i].largura)
-                {
-                    apaga_inimigo(inimigos[i]);
-                    inimigos[i].se_pos.x = 0;
-                    inimigos[i].se_pos.y = 0;
-                    inimigos[i].status = 0;
-                }
-                break;
-            case -1:
-                if(inimigos[i].se_pos.x > LIMESQ + 2)
-                {
-                    apaga_inimigo(inimigos[i]);
-                    inimigos[i].se_pos.x--;
-                    desenha_inimigo(inimigos[i]);
-                }
-                else if (inimigos[i].se_pos.x == LIMESQ + 2)
-                {
-                    apaga_inimigo(inimigos[i]);
-                    inimigos[i].se_pos.x = 0;
-                    inimigos[i].se_pos.y = 0;
-                    inimigos[i].status = 0;
-                }
-                break;
+        case 1:
+            if (inimigos[i].se_pos.x < LIMDIR - inimigos[i].largura)
+            {
+                apaga_inimigo(inimigos[i]);
+                inimigos[i].se_pos.x++;
+                desenha_inimigo(inimigos[i]);
+            }
+            else if (inimigos[i].se_pos.x == LIMDIR - inimigos[i].largura)
+            {
+                apaga_inimigo(inimigos[i]);
+                inimigos[i].se_pos.x = 0;
+                inimigos[i].se_pos.y = 0;
+                inimigos[i].status = 0;
+            }
+            break;
+        case -1:
+            if(inimigos[i].se_pos.x > LIMESQ + 2)
+            {
+                apaga_inimigo(inimigos[i]);
+                inimigos[i].se_pos.x--;
+                desenha_inimigo(inimigos[i]);
+            }
+            else if (inimigos[i].se_pos.x == LIMESQ + 2)
+            {
+                apaga_inimigo(inimigos[i]);
+                inimigos[i].se_pos.x = 0;
+                inimigos[i].se_pos.y = 0;
+                inimigos[i].status = 0;
+            }
+            break;
         }
     }
 }
 
-void move_missil(MISSIL *misseis)
+void move_torpedo(TORPEDO *torpedos)
 {
     int i;
-    for (i = 0; i < MISSEIS; i++)
+    for (i = 0; i < TORPEDOS; i++)
     {
-        switch(misseis[i].status)
+        switch(torpedos[i].status)
         {
-            case 1:
-                if (misseis[i].se_pos.x < LIMDIR - misseis[i].largura - 1)
-                {
-                    apaga_missil(misseis[i]);
-                    misseis[i].se_pos.x += 2;
-                    desenha_missil(misseis[i]);
-                }
-                else if (misseis[i].se_pos.x == LIMDIR - misseis[i].largura || misseis[i].se_pos.x == LIMDIR - misseis[i].largura - 1)
-                {
-                    apaga_missil(misseis[i]);
-                    misseis[i].se_pos.x = 0;
-                    misseis[i].se_pos.y = 0;
-                    misseis[i].status = 0;
-                }
-                break;
-            case -1:
-                if(misseis[i].se_pos.x > LIMESQ + 2 + 1)
-                {
-                    apaga_missil(misseis[i]);
-                    misseis[i].se_pos.x -= 2;
-                    desenha_missil(misseis[i]);
-                }
-                else if (misseis[i].se_pos.x == LIMESQ + 2 || misseis[i].se_pos.x == LIMESQ + 2 + 1)
-                {
-                    apaga_missil(misseis[i]);
-                    misseis[i].se_pos.x = 0;
-                    misseis[i].se_pos.y = 0;
-                    misseis[i].status = 0;
-                }
-                break;
+        case 1:
+            if (torpedos[i].se_pos.x < LIMDIR - torpedos[i].largura - 1)
+            {
+                apaga_torpedo(torpedos[i]);
+                torpedos[i].se_pos.x += 2;
+                desenha_torpedo(torpedos[i]);
+            }
+            else if (torpedos[i].se_pos.x == LIMDIR - torpedos[i].largura || torpedos[i].se_pos.x == LIMDIR - torpedos[i].largura - 1)
+            {
+                apaga_torpedo(torpedos[i]);
+                torpedos[i].se_pos.x = 0;
+                torpedos[i].se_pos.y = 0;
+                torpedos[i].status = 0;
+            }
+            break;
+        case -1:
+            if(torpedos[i].se_pos.x > LIMESQ + 2 + 1)
+            {
+                apaga_torpedo(torpedos[i]);
+                torpedos[i].se_pos.x -= 2;
+                desenha_torpedo(torpedos[i]);
+            }
+            else if (torpedos[i].se_pos.x == LIMESQ + 2 || torpedos[i].se_pos.x == LIMESQ + 2 + 1)
+            {
+                apaga_torpedo(torpedos[i]);
+                torpedos[i].se_pos.x = 0;
+                torpedos[i].se_pos.y = 0;
+                torpedos[i].status = 0;
+            }
+            break;
         }
     }
 }
@@ -1002,9 +1124,9 @@ void printbin(char *nome_save)
             printf("%d\n",state_buffer.inimigos[i].se_pos.x);
         }
         printf("Misseis:\n");
-        for(i = 0; i < MISSEIS; i++)
+        for(i = 0; i < TORPEDOS; i++)
         {
-            printf("%d\n",state_buffer.misseis[i].se_pos.x);
+            printf("%d\n",state_buffer.torpedos[i].se_pos.x);
         }
         printf("Pontos:\n");
         printf("%d\n",state_buffer.pontuacao);
@@ -1018,7 +1140,7 @@ void printbin(char *nome_save)
     fclose(save);
 }
 
-void load_game(int *pontuacao, char *nome, SUBMARINO *jogador, MERGULHADOR *mergulhadores, INIMIGO *inimigos, MISSIL *misseis, int *erro)
+void load_game(int *pontuacao, char *nome, SUBMARINO *jogador, MERGULHADOR *mergulhadores, INIMIGO *inimigos, TORPEDO *torpedos, int *erro)
 {
     int i;
     background();
@@ -1039,9 +1161,9 @@ void load_game(int *pontuacao, char *nome, SUBMARINO *jogador, MERGULHADOR *merg
         {
             inimigos[i] = state_buffer.inimigos[i];
         }
-        for(i = 0; i < MISSEIS; i++)
+        for(i = 0; i < TORPEDOS; i++)
         {
-            misseis[i] = state_buffer.misseis[i];
+            torpedos[i] = state_buffer.torpedos[i];
         }
     }
     else
