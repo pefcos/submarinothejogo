@@ -1,7 +1,9 @@
 # Submarino the Jogo
 
 **universidade federal do rio grande do sul**
+
 **curso de ciencia da computacao**
+
 **projeto final da disciplina de algoritmos e programacao**
 
 ## Changelog
