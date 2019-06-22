@@ -52,9 +52,10 @@
 #define ESC 27
 #define ESPACO 32
 
-/* valores referentes as quantidades de obstaculos */
+/* valores referentes aos obstaculos */
 #define MERGULHADORES 5
 #define INIMIGOS 4
+#define PROB 3
 
 /* valores referentes a posicao inicial do submarino */
 #define XINI 35
@@ -72,6 +73,7 @@
 #define VALOR_INIMIGO 50
 
 /* valores referentes ao ranking */
+#define MAXPOS 30
 #define RANKINGS 10
 #define TAMANHO_NOME 20
 
@@ -88,7 +90,7 @@ typedef struct coordenada
 
 /*
  * estrutura: submarino
- * ---------------------
+ * --------------------
  * parametros do submarino do jogador
  */
 typedef struct submarino
@@ -104,7 +106,7 @@ typedef struct submarino
 
 /*
  * estrutura: mergulhador
- * ---------------------
+ * ---------------------_
  * parametros dos mergulhadores
  */
 typedef struct mergulhador
@@ -116,7 +118,7 @@ typedef struct mergulhador
 
 /*
  * estrutura: inimigo
- * ---------------------
+ * ------------------
  * parametros dos submarinos inimigos
  */
 typedef struct inimigo
@@ -129,7 +131,7 @@ typedef struct inimigo
 
 /*
  * estrutura: torpedo
- * ---------------------
+ * ------------------
  * parametros dos torpedos lançados
  */
 typedef struct torpedo
@@ -141,7 +143,7 @@ typedef struct torpedo
 
 /*
  * estrutura: state
- * ---------------------
+ * ----------------
  * guarda estados do jogo para permitir carregamento posterior
  */
 typedef struct state
@@ -175,7 +177,7 @@ void colide_inimigo(SUBMARINO *jogador, INIMIGO *inimigos);
 void colide_torpedo(TORPEDO *torpedos, INIMIGO *inimigos, int *pontuacao);
 void inicializa_mergulhadores(MERGULHADOR *mergulhadores, INIMIGO *inimigos);
 void inicializa_inimigos(INIMIGO *inimigos, MERGULHADOR *mergulhadores);
-void atira_torpedo(TORPEDO *torpedos, SUBMARINO jogador);
+void lanca_torpedo(TORPEDO *torpedos, SUBMARINO jogador);
 void desenha_mergulhador(MERGULHADOR mergulhador);
 void desenha_inimigo(INIMIGO inimigo);
 void desenha_torpedo(TORPEDO torpedo);
@@ -185,29 +187,43 @@ void apaga_torpedo(TORPEDO torpedo);
 void move_mergulhador(MERGULHADOR *mergulhadores);
 void move_inimigo(INIMIGO *inimigos);
 void move_torpedo(TORPEDO *torpedos);
-int verifica_vidas(SUBMARINO jogador); //Retorna 1 se o jogador esta vivo e 0 se ele esta morto.
+int verifica_vidas(SUBMARINO jogador);
 void devolve_mergulhadores(SUBMARINO *jogador, int *pontuacao);
-void ponto_aquatico(SUBMARINO jogador, int *pontuacao, int *contador); //Conta ponto pra cada segundo submerso.
+void ponto_aquatico(SUBMARINO jogador, int *pontuacao, int *contador);
 void creditos();
 int confirma_save();
 void salva_jogo(STATE save_state, char *nome_save, int load);
 void printbin(char *nome_save);
-void load_game(int *pontuacao, char *nome, SUBMARINO *jogador, MERGULHADOR *mergulhadores, INIMIGO *inimigos, TORPEDO *torpedos, int *erro);
+void load_game(int *pontuacao, char *nome, SUBMARINO *jogador,
+               MERGULHADOR *mergulhadores, INIMIGO *inimigos, TORPEDO *torpedos,
+               int *erro);
 void imprime_ranking();
 int carrega_ranking(char nomes[][TAMANHO_NOME], int *pontos);
 void salva_ranking(char jog_nome[TAMANHO_NOME], int jog_pontos);
 
+/*
+ * funcao: main
+ * ------------
+ * chama a funcao menu
+ */
 int main()
 {
     menu();
 }
 
+/*
+ * funcao: menu
+ * ------------
+ * chama a funcao correspondente a opcao escolhida pelo jogador
+ *     menu_input  : recebe input do teclado
+ *     menu_cursor : posicao do cursor no menu
+ *     endgame     : controla saida do jogo
+ */
 void menu()
 {
-    int menu_cursor = TOPOPTION;
     int menu_input = 0;
+    int menu_cursor = TOPOPTION;
     int endgame = 0;
-    char nome[TAMANHO_NOME] = " ";
     while(endgame == 0)
     {
         menu_cursor = TOPOPTION;
@@ -240,6 +256,13 @@ void menu()
     }
 }
 
+/*
+ * funcao: move_cursor_menu
+ * ------------------------
+ * move o cursor do menu de acordo com o input do jogador
+ *     menu_input  : recebe input do teclado
+ *     menu_cursor : posicao do cursor no menu
+ */
 void move_cursor_menu(int *menu_input, int *menu_cursor)
 {
     if (kbhit())
@@ -265,42 +288,70 @@ void move_cursor_menu(int *menu_input, int *menu_cursor)
     }
 }
 
+/*
+ * funcao: desenha_menu
+ * --------------------
+ * desenha a tela de menu do jogo
+ */
 void desenha_menu()
 {
-    cputsxy(10, 8,  "  _____ _    _ ____  __  __          _____  _____ _   _  ____  ");
-    cputsxy(10, 9,  " / ____| |  | |  _ \\|  \\/  |   /\\   |  __ \\|_   _| \\ | |/ __ \\ ");
-    cputsxy(10, 10, "| (___ | |  | | |_) | \\  / |  /  \\  | |__) | | | |  \\| | |  | |");
-    cputsxy(10, 11, " \\___ \\| |  | |  _ <| |\\/| | / /\\ \\ |  _  /  | | | . ` | |  | |");
-    cputsxy(10, 12, " ____) | |__| | |_) | |  | |/ ____ \\| | \\ \\ _| |_| |\\  | |__| |");
-    cputsxy(10, 13, "|_____/ \\____/|____/|_|  |_/_/    \\_\\_|  \\_\\_____|_| \\_|\\____/ ");
+    cputsxy(10, 8,  "  _____ _    _ ____  __  __          _____  _____ _   _  _"
+                    "___  ");
+    cputsxy(10, 9,  " / ____| |  | |  _ \\|  \\/  |   /\\   |  __ \\|_   _| \\ "
+                    "| |/ __ \\ ");
+    cputsxy(10, 10, "| (___ | |  | | |_) | \\  / |  /  \\  | |__) | | | |  \\| "
+                    "| |  | |");
+    cputsxy(10, 11, " \\___ \\| |  | |  _ <| |\\/| | / /\\ \\ |  _  /  | | | . "
+                    "` | |  | |");
+    cputsxy(10, 12, " ____) | |__| | |_) | |  | |/ ____ \\| | \\ \\ _| |_| |\\ "
+                    " | |__| |");
+    cputsxy(10, 13, "|_____/ \\____/|____/|_|  |_/_/    \\_\\_|  \\_\\_____|_| "
+                    "\\_|\\____/ ");
     cputsxy(10, 14, "THE JOGO");
     cputsxy(28, 14, "Por: Pedro F. C. da Silva e Tiago D. Ferreira");
     cputsxy(20, 18, "NOVO JOGO");
     cputsxy(20, 19, "CARREGAR JOGO");
     cputsxy(20, 20, "CREDITOS");
-    cputsxy(20, 21, "RECORDES (not implementado ainda)");
+    cputsxy(20, 21, "RECORDES");
     cputsxy(20, 22, "SAIR DO JOGO");
-
 }
 
+/*
+ * funcao: gameloop
+ * ----------------
+ * controla as funcoes do jogo
+ *     load      : indica se novo jogo ou carregamento de jogo salvo
+ *     input     : recebe input do teclado
+ *     erro      : indica se ocorreu erro no carregamento do jogo salvo
+ *     contador  : conta tempo pra registrar os pontos submersos
+ *     pontuacao : recebe pontuacao do jogador
+ *     nome      : recebe nome do jogador
+ */
 void gameloop(int load)
 {
     int i;
     int input;
     int erro = 0;
-    int contador = 0;//Conta tempo pra registrar os pontos submersos
+    int contador = 0;
     int pontuacao = 0;
     char nome[20] = " ";
 
+    /* inicializacao das variaveis relacionadas aos objetos que podem ser
+     * impressos na tela, todas com seus valores iniciais
+     */
     SUBMARINO jogador = {{XINI,YINI},1,2,12,OXIGENIOMAX,VIDAS,0};
-    MERGULHADOR mergulhadores[MERGULHADORES] = {{{0,0},4,0},{{0,0},4,0},{{0,0},4,0},{{0,0},4,0},{{0,0},4,0}};
-    INIMIGO inimigos[INIMIGOS] = {{{0,0},2,9,0},{{0,0},2,9,0},{{0,0},2,9,0},{{0,0},2,9,0}};
+    MERGULHADOR mergulhadores[MERGULHADORES] = {{{0,0},4,0},{{0,0},4,0},
+                                                {{0,0},4,0},{{0,0},4,0},
+                                                {{0,0},4,0}};
+    INIMIGO inimigos[INIMIGOS] = {{{0,0},2,9,0},{{0,0},2,9,0},{{0,0},2,9,0},
+                                  {{0,0},2,9,0}};
     TORPEDO torpedos[TORPEDOS] = {{{0,0},2,0},{{0,0},2,0}};
 
     background();
     if(load == 1)
     {
-        load_game(&pontuacao, nome, &jogador, mergulhadores, inimigos, torpedos, &erro);
+        load_game(&pontuacao, nome, &jogador, mergulhadores, inimigos, torpedos,
+                  &erro);
     }
     else
     {
@@ -330,7 +381,8 @@ void gameloop(int load)
             colide_torpedo(torpedos, inimigos, &pontuacao);
             mostra_interface(pontuacao, jogador);
         }
-        while (input != ESC && verifica_vidas(jogador));
+        while (input != ESC
+               && verifica_vidas(jogador));
         if(input == ESC)
         {
             if(confirma_save() == 1)
@@ -361,6 +413,11 @@ void gameloop(int load)
     }
 }
 
+/*
+ * funcao: background
+ * ------------------
+ * modifica a cor do plano de fundo da tela de jogo
+ */
 void background()
 {
     int i, j;
@@ -373,6 +430,11 @@ void background()
         }
 }
 
+/*
+ * funcao: desenha_agua
+ * --------------------
+ * imprime as ondas da superficie da agua
+ */
 void desenha_agua()
 {
     textcolor(CORAGUA);
@@ -385,6 +447,14 @@ void desenha_agua()
     textcolor(CORFRENTE);
 }
 
+/*
+ * funcao: mostra_interface
+ * ------------------------
+ * imprime a interface da tela de jogo, mostrando pontuacao, nivel de oxigenio,
+ * quantidade atual de vidas e carga
+ *     pontuacao : recebe pontuacao do jogador
+ *     jogador   : estrutura com os parametros do jogador
+ */
 void mostra_interface(int pontuacao, SUBMARINO jogador)
 {
     int i;
@@ -422,6 +492,13 @@ void mostra_interface(int pontuacao, SUBMARINO jogador)
     printf("Capacidade: %d/%d", jogador.carga, CARGA);
 }
 
+/*
+ * funcao: atualiza_oxigenio
+ * -------------------------
+ * controla o nivel de oxigenio do jogador, diminuindo quando submerso e
+ * aumentando quando na superficie da agua
+ *     jogador : estrutura com os parametros do jogador
+ */
 void atualiza_oxigenio(SUBMARINO *jogador)
 {
     if((*jogador).se_pos.y < LIMAGUA)
@@ -445,6 +522,13 @@ void atualiza_oxigenio(SUBMARINO *jogador)
     }
 }
 
+/*
+ * funcao: tela_inicial
+ * --------------------
+ * recebe como input do jogador o seu nome, inserindo "jogador" como default
+ * caso nenhum nome seja inserido
+ *     nome : recebe nome do jogador
+ */
 void tela_inicial(char *nome)
 {
     gotoxy(30, 10);
@@ -456,6 +540,11 @@ void tela_inicial(char *nome)
     clrscr();
 }
 
+/*
+ * funcao: tela_jogo
+ * -----------------
+ * imprime a moldura da tela de jogo
+ */
 void tela_jogo()
 {
     int i;
@@ -518,6 +607,12 @@ void tela_jogo()
     printf("%c", 188);
 }
 
+/*
+ * funcao: desenha_jogador
+ * -----------------------
+ * imprime o submarino do jogador de acordo com sua direcao
+ *     jogador : estrutura com os parametros do jogador
+ */
 void desenha_jogador(SUBMARINO jogador)
 {
     textcolor(CORSUBMARINO);
@@ -534,12 +629,27 @@ void desenha_jogador(SUBMARINO jogador)
     textcolor(CORFRENTE);
 }
 
+/*
+ * funcao: apaga_jogador
+ * ---------------------
+ * apaga o submarino do jogador
+ *     jogador : estrutura com os parametros do jogador
+ */
 void apaga_jogador(SUBMARINO jogador)
 {
     cputsxy(jogador.se_pos.x, jogador.se_pos.y,    "            ");
     cputsxy(jogador.se_pos.x, jogador.se_pos.y + 1,"            ");
 }
 
+/*
+ * funcao: move_jogador
+ * --------------------
+ * recebe input do jogador e atualiza posicao do submarino do jogador de acordo
+ * com o comando recebido
+ *     input    : recebe input do teclado
+ *     jogador  : estrutura com os parametros do jogador
+ *     torpedos : estrutura com os parametros dos torpedos
+ */
 void move_jogador(int *input, SUBMARINO *jogador, TORPEDO *torpedos)
 {
     if (kbhit())
@@ -583,7 +693,7 @@ void move_jogador(int *input, SUBMARINO *jogador, TORPEDO *torpedos)
             }
             break;
         case ESPACO:
-            atira_torpedo(torpedos, *jogador);
+            lanca_torpedo(torpedos, *jogador);
             if(!(((*jogador).se_pos.x <= LIMESQ + 1 + torpedos[0].largura) && (*jogador).sentido == 1) && !(((*jogador).se_pos.x+(*jogador).largura+torpedos[0].largura >= LIMDIR) && (*jogador).sentido == -1))
             {
 
@@ -597,6 +707,13 @@ void move_jogador(int *input, SUBMARINO *jogador, TORPEDO *torpedos)
     }
 }
 
+/*
+ * funcao: testa_posicao_megulhador
+ * --------------------------------
+ * testa se ocorreu colisao entre submarino do jogador e os mergulhadores
+ *     jogador     : estrutura com os parametros do jogador
+ *     mergulhador : estrutura com os parametros dos mergulhadores
+ */
 int testa_posicao_megulhador(SUBMARINO jogador, MERGULHADOR mergulhador)
 {
     if((jogador.se_pos.x + jogador.largura >= mergulhador.se_pos.x) && (mergulhador.se_pos.x >= jogador.se_pos.x - mergulhador.largura))
@@ -609,6 +726,13 @@ int testa_posicao_megulhador(SUBMARINO jogador, MERGULHADOR mergulhador)
     return 0;
 }
 
+/*
+ * funcao: testa_posicao_inimigo
+ * -----------------------------
+ * testa se ocorreu colisao entre submarino do jogador e os submarinos inimigos
+ *     jogador : estrutura com os parametros do jogador
+ *     inimigo : estrutura com os parametros dos inimigos
+ */
 int testa_posicao_inimigo(SUBMARINO jogador, INIMIGO inimigo)
 {
     if((jogador.se_pos.x + jogador.largura >= inimigo.se_pos.x) && (inimigo.se_pos.x >= jogador.se_pos.x - inimigo.largura))
@@ -621,6 +745,14 @@ int testa_posicao_inimigo(SUBMARINO jogador, INIMIGO inimigo)
     return 0;
 }
 
+/*
+ * funcao: testa_posicao_torpedo
+ * -----------------------------
+ * testa se ocorreu colisao entre o torpedo lancado pelo submarino do jogador
+ * e os submarinos inimigos
+ *     torpedo : estrutura com os parametros dos torpedos
+ *     inimigo : estrutura com os parametros dos inimigos
+ */
 int testa_posicao_torpedo(TORPEDO torpedo, INIMIGO inimigo)
 {
     if((torpedo.se_pos.x + torpedo.largura >= inimigo.se_pos.x) && (torpedo.se_pos.x <= inimigo.se_pos.x + inimigo.largura))
@@ -636,6 +768,14 @@ int testa_posicao_torpedo(TORPEDO torpedo, INIMIGO inimigo)
     return 0;
 }
 
+/*
+ * funcao: pega_mergulhador
+ * ------------------------
+ * havendo colisao entre o submarino do jogador e os mergulhadores, realiza o
+ * salvamento do mergulhador
+ *     jogador       : estrutura com os parametros do jogador
+ *     mergulhadores : estrutura com os parametros dos mergulhadores
+ */
 void pega_mergulhador(SUBMARINO *jogador, MERGULHADOR *mergulhadores)
 {
     int i;
@@ -654,6 +794,13 @@ void pega_mergulhador(SUBMARINO *jogador, MERGULHADOR *mergulhadores)
     }
 }
 
+/*
+ * funcao: destroi_jogador
+ * -----------------------
+ * reseta os parametros do submarino do jogador a cada vez que colide com um
+ * submarino inimigo
+ *     jogador : estrutura com os parametros do jogador
+ */
 void destroi_jogador(SUBMARINO *jogador)
 {
     apaga_jogador(*jogador);
@@ -664,6 +811,14 @@ void destroi_jogador(SUBMARINO *jogador)
     (*jogador).vidas -= 1;
 }
 
+/*
+ * funcao: colide_inimigo
+ * ----------------------
+ * havendo colisao entre o submarino do jogador e um submarino inimigo, apaga
+ * ambos os submarinos
+ *     jogador  : estrutura com os parametros do jogador
+ *     inimigos : estrutura com os parametros dos inimigos
+ */
 void colide_inimigo(SUBMARINO *jogador, INIMIGO *inimigos)
 {
     int i;
@@ -681,6 +836,15 @@ void colide_inimigo(SUBMARINO *jogador, INIMIGO *inimigos)
     }
 }
 
+/*
+ * funcao: colide_torpedo
+ * ----------------------
+ * havendo colisao entre o torpedo lancado pelo submarino do jogador e um
+ * submarino inimigo, apaga ambos e altera pontuacao de acordo
+ *     torpedos  : estrutura com os parametros dos torpedos
+ *     inimigos  : estrutura com os parametros dos inimigos
+ *     pontuacao : recebe pontuacao do jogador
+ */
 void colide_torpedo(TORPEDO *torpedos, INIMIGO *inimigos, int *pontuacao)
 {
     int i;
@@ -699,12 +863,21 @@ void colide_torpedo(TORPEDO *torpedos, INIMIGO *inimigos, int *pontuacao)
                 inimigos[j].se_pos.x = 0;
                 inimigos[j].se_pos.y = 0;
                 inimigos[j].status = 0;
-                *pontuacao += 50;
+                *pontuacao += VALOR_INIMIGO;
             }
         }
     }
 }
 
+/*
+ * funcao: inicializa_mergulhadores
+ * --------------------------------
+ * inicializa, com chance calculada a partir de seed randomica, um mergulhador
+ * ainda nao inicializado na tela
+ *     mergulhador : estrutura com os parametros dos mergulhadores
+ *     inimigo     : estrutura com os parametros dos inimigos
+ *     chance      : recebe numero randomico
+ */
 void inicializa_mergulhadores(MERGULHADOR *mergulhadores, INIMIGO *inimigos)
 {
     int i,j;
@@ -713,21 +886,26 @@ void inicializa_mergulhadores(MERGULHADOR *mergulhadores, INIMIGO *inimigos)
     for (i = 0; i < MERGULHADORES; i++)
     {
         chance = rand() % 3;
+        /* verifica se mergulhador nao esta impresso na tela */
         if (mergulhadores[i].status == 0 && chance == 1)
         {
-            mergulhadores[i].status = (rand () % 3) - 1;
+            /* atribui randomicamente a direcao do mergulhador inicializado */
+            mergulhadores[i].status = (rand () % PROB) - 1;
+            /* se status == -1, inicializa no lado direito da tela */
             if(mergulhadores[i].status == -1)
             {
                 mergulhadores[i].se_pos.x = LIMDIR - mergulhadores[i].largura;
                 mergulhadores[i].se_pos.y = rand () % (LIMBAIXO - LIMCIMA - LIMAGUA) + (LIMCIMA + LIMAGUA);
             }
+            /* se status == 1, inicializa no lado esquerdo da tela */
             else if (mergulhadores[i].status == 1)
             {
                 mergulhadores[i].se_pos.x = LIMESQ + 1;
                 mergulhadores[i].se_pos.y = rand () % (LIMBAIXO - LIMCIMA - LIMAGUA) + (LIMCIMA + LIMAGUA);
             }
 
-            //Verifica se y é igual a outros mergulhadores ou submarinos inimigos. Se for, deixa de inicializar o mergulhador.
+            /* verifica se coordenada y é igual a outros mergulhadores */
+            /* ja inicializados, se sim, nao inicializa o mergulhador  */
             for(j = 0; j < MERGULHADORES; j++)
             {
                 if((mergulhadores[i].se_pos.y == mergulhadores[j].se_pos.y) && (i != j))
@@ -737,6 +915,9 @@ void inicializa_mergulhadores(MERGULHADOR *mergulhadores, INIMIGO *inimigos)
                     mergulhadores[i].se_pos.y = 0;
                 }
             }
+
+            /* verifica se coordenada y é igual a de submarinos inimigos */
+            /* ja inicializados, se sim, nao inicializa o mergulhador    */
             for(j = 0; j < MERGULHADORES; j++)
             {
                 if(mergulhadores[i].se_pos.y == inimigos[j].se_pos.y || mergulhadores[i].se_pos.y == inimigos[j].se_pos.y + 1)
@@ -748,11 +929,21 @@ void inicializa_mergulhadores(MERGULHADOR *mergulhadores, INIMIGO *inimigos)
             }
         }
     }
+    /* se status != 0, imprime mergulhador na tela de jogo */
     for(i = 0; i < MERGULHADORES; i++)
         if (mergulhadores[i].status != 0)
             desenha_mergulhador(mergulhadores[i]);
 }
 
+/*
+ * funcao: inicializa_inimigos
+ * ---------------------------
+ * inicializa, com chance calculada a partir de seed randomica, um submarino
+ * inimigo ainda nao inicializado na tela
+ * inimigos      : estrutura com os parametros dos inimigos
+ * mergulhadores : estrutura com os parametros dos mergulhadores
+ * chance        : recebe numero randomico
+ */
 void inicializa_inimigos(INIMIGO *inimigos, MERGULHADOR *mergulhadores)
 {
     int i, j;
@@ -761,21 +952,26 @@ void inicializa_inimigos(INIMIGO *inimigos, MERGULHADOR *mergulhadores)
     for (i = 0; i < INIMIGOS; i++)
     {
         chance = rand() % 3;
+        /* verifica se inimigo nao esta impresso na tela */
         if (inimigos[i].status == 0 && chance == 1)
         {
-            inimigos[i].status = (rand () % 3) - 1;
+            /* atribui randomicamente a direcao do inimigo inicializado */
+            inimigos[i].status = (rand () % PROB) - 1;
+            /* se status == -1, inicializa no lado direito da tela */
             if(inimigos[i].status == -1)
             {
                 inimigos[i].se_pos.x = LIMDIR - inimigos[i].largura;
                 inimigos[i].se_pos.y = rand () % (LIMBAIXO - LIMCIMA - LIMAGUA-1) + (LIMCIMA + LIMAGUA);
             }
+            /* se status == 1, inicializa no lado esquerdo da tela */
             else if (inimigos[i].status == 1)
             {
                 inimigos[i].se_pos.x = LIMESQ + 1;
                 inimigos[i].se_pos.y = rand () % (LIMBAIXO - LIMCIMA - LIMAGUA-1) + (LIMCIMA + LIMAGUA);
             }
 
-            //Verifica se y é igual a outros mergulhadores ou submarinos inimigos. Se for, deixa de inicializar o submarino.
+            /* verifica se coordenada y é igual a de mergulhadores */
+            /* ja inicializados, se sim, nao inicializa o inimigo  */
             for(j = 0; j < INIMIGOS; j++)
             {
                 if((inimigos[i].se_pos.y == mergulhadores[j].se_pos.y || inimigos[i].se_pos.y + 1 == mergulhadores[j].se_pos.y) && (i != j))
@@ -785,6 +981,9 @@ void inicializa_inimigos(INIMIGO *inimigos, MERGULHADOR *mergulhadores)
                     inimigos[i].se_pos.y = 0;
                 }
             }
+
+            /* verifica se coordenada y é igual a de inimigos      */
+            /* ja inicializados, se sim, nao inicializa o inimigo  */
             for(j = 0; j < INIMIGOS; j++)
             {
                 if((inimigos[i].se_pos.y == inimigos[j].se_pos.y || inimigos[i].se_pos.y == inimigos[j].se_pos.y + 1 || inimigos[i].se_pos.y + 1 == inimigos[j].se_pos.y || mergulhadores[i].se_pos.y + 1 == inimigos[j].se_pos.y + 1) && (i != j))
@@ -796,18 +995,26 @@ void inicializa_inimigos(INIMIGO *inimigos, MERGULHADOR *mergulhadores)
             }
         }
     }
+    /* se status != 0, imprime inimigo na tela de jogo */
     for(i = 0; i < INIMIGOS; i++)
         if (inimigos[i].status != 0)
             desenha_inimigo(inimigos[i]);
 }
 
-void atira_torpedo(TORPEDO *torpedos, SUBMARINO jogador)
+/*
+ * funcao: lanca_torpedo
+ * ---------------------
+ * inicializa torpedo na mesma direcao do submarino do jogador, limita o maximo
+ * de torpedos na tela
+ *     torpedos : estrutura com os parametros dos torpedos
+ *     jogador  : estrutura com os parametros do jogador
+ */
+void lanca_torpedo(TORPEDO *torpedos, SUBMARINO jogador)
 {
     int i = 0;
-    int find = 0;
     if(jogador.se_pos.y >= LIMAGUA)
     {
-        while(find == 0 && i < TORPEDOS)
+        while(i < TORPEDOS)
         {
             if(torpedos[i].status == 0)
             {
@@ -821,13 +1028,18 @@ void atira_torpedo(TORPEDO *torpedos, SUBMARINO jogador)
                 {
                     torpedos[i].se_pos.x = jogador.se_pos.x - torpedos[i].largura;
                 }
-                find = 1;
             }
             i++;
         }
     }
 }
 
+/*
+ * funcao: desenha_mergulhador
+ * ---------------------------
+ * imprime mergulhador na tela de acordo com sua direcao
+ *     mergulhador : estrutura com os parametros dos mergulhadores
+ */
 void desenha_mergulhador(MERGULHADOR mergulhador)
 {
     textcolor(CORMERGULHADOR);
@@ -842,6 +1054,12 @@ void desenha_mergulhador(MERGULHADOR mergulhador)
     textcolor(CORFRENTE);
 }
 
+/*
+ * funcao: desenha_inimigo
+ * -----------------------
+ * imprime inimigo na tela de acordo com sua direcao
+ *     inimigo : estrutura com os parametros dos inimigos
+ */
 void desenha_inimigo(INIMIGO inimigo)
 {
     textcolor(CORINIMIGO);
@@ -858,6 +1076,12 @@ void desenha_inimigo(INIMIGO inimigo)
     textcolor(CORFRENTE);
 }
 
+/*
+ * funcao: desenha_torpedo
+ * -----------------------
+ * imprime torpedo na tela de acordo com sua direcao
+ *     torpedo : estrutura com os parametros dos torpedos
+ */
 void desenha_torpedo(TORPEDO torpedo)
 {
     textcolor(CORTORPEDO);
@@ -872,22 +1096,46 @@ void desenha_torpedo(TORPEDO torpedo)
     textcolor(CORFRENTE);
 }
 
+/*
+ * funcao: apaga_mergulhador
+ * -------------------------
+ * apaga mergulhador, imprimindo espacos em branco
+ *     mergulhador : estrutura com os parametros dos mergulhadores
+ */
 void apaga_mergulhador(MERGULHADOR mergulhador)
 {
     cputsxy(mergulhador.se_pos.x, mergulhador.se_pos.y, "    ");
 }
 
+/*
+ * funcao: apaga_inimigo
+ * ---------------------
+ * apaga inimigo, imprimindo espacos em branco
+ *     inimigo : estrutura com os parametros dos inimigos
+ */
 void apaga_inimigo(INIMIGO inimigo)
 {
     cputsxy(inimigo.se_pos.x, inimigo.se_pos.y,   "         ");
     cputsxy(inimigo.se_pos.x, inimigo.se_pos.y+1, "         ");
 }
 
+/*
+ * funcao: apaga_torpedo
+ * ---------------------
+ * apaga torpedo, imprimindo espacos em branco
+ * torpedo : estrutura com os parametros dos torpedos
+ */
 void apaga_torpedo(TORPEDO torpedo)
 {
     cputsxy(torpedo.se_pos.x, torpedo.se_pos.y, "  ");
 }
 
+/*
+ * funcao: move_mergulhador
+ * ------------------------
+ * atualiza posicao dos mergulhadores, de acordo com sua direcao
+ *     mergulhadores : estrutura com os parametros dos mergulhadores
+ */
 void move_mergulhador(MERGULHADOR *mergulhadores)
 {
     int i;
@@ -929,6 +1177,12 @@ void move_mergulhador(MERGULHADOR *mergulhadores)
     }
 }
 
+/*
+ * funcao: move_inimigo
+ * --------------------
+ * atualiza posicao dos inimigos, de acordo com sua direcao
+ *     inimigos : estrutura com os parametros dos inimigos
+ */
 void move_inimigo(INIMIGO *inimigos)
 {
     int i;
@@ -970,6 +1224,12 @@ void move_inimigo(INIMIGO *inimigos)
     }
 }
 
+/*
+ * funcao: move_torpedo
+ * --------------------
+ * atualiza posicao dos torpedos, de acordo com sua direcao
+ *     torpedos : estrutura com os parametros dos torpedos
+ */
 void move_torpedo(TORPEDO *torpedos)
 {
     int i;
@@ -1011,6 +1271,12 @@ void move_torpedo(TORPEDO *torpedos)
     }
 }
 
+/*
+ * funcao: verifica_vidas
+ * ----------------------
+ * retorna 1 se o jogador esta vivo e 0 se ele esta morto
+ *     jogador : estrutura com os parametros do jogador
+ */
 int verifica_vidas(SUBMARINO jogador)
 {
     if(jogador.vidas > 0)
@@ -1023,6 +1289,14 @@ int verifica_vidas(SUBMARINO jogador)
     }
 }
 
+/*
+ * funcao: devolve_mergulhadores
+ * -----------------------------
+ * zera carga do submarino, aumentando pontuacao de acordo com valor
+ * especificado, quando submarino retorno a superficie
+ *     jogador   : estrutura com os parametros do jogador
+ *     pontuacao : recebe pontuacao do jogador
+ */
 void devolve_mergulhadores(SUBMARINO *jogador, int *pontuacao)
 {
     if((*jogador).se_pos.y < LIMAGUA)
@@ -1032,6 +1306,14 @@ void devolve_mergulhadores(SUBMARINO *jogador, int *pontuacao)
     }
 }
 
+/*
+ * funcao: ponto_aquatico
+ * ----------------------
+ * incrementa pontuacao em 1 pra cada 21 ciclos submerso
+ *     jogador   : estrutura com os parametros do jogador
+ *     pontuacao : recebe pontuacao do jogador
+ *     contador  : conta tempo pra registrar os pontos submersos
+ */
 void ponto_aquatico(SUBMARINO jogador, int *pontuacao, int *contador)
 {
     if(jogador.se_pos.y >= LIMAGUA)
@@ -1048,23 +1330,34 @@ void ponto_aquatico(SUBMARINO jogador, int *pontuacao, int *contador)
     }
 }
 
+/*
+ * funcao: creditos
+ * ----------------
+ * exibe creditos do jogo
+ */
 void creditos()
 {
     background();
     cputsxy(29,10,"Jogo desenvolvido por:");
     cputsxy(25,12,"Pedro Fronchetti Costa da Silva");
     cputsxy(31,13,"Tiago Dias Ferreira");
-    getchar();
+    getch();
 }
 
+/*
+ * funcao: confirma_save
+ * ---------------------
+ * retorna 1 caso jogador deseja salvar o jogo e 0 caso contario
+ * opcao : recebe input do teclado
+ */
 int confirma_save()
 {
-    char sim;
+    char opcao;
     background();
     gotoxy(30, 10);
     printf("Deseja salvar o jogo?");
-    sim = getchar();
-    if(sim == 's')
+    opcao = getchar();
+    if(opcao == 's')
     {
         return 1;
     }
@@ -1075,6 +1368,15 @@ int confirma_save()
     clrscr();
 }
 
+/*
+ * funcao: salva_jogo
+ * ------------------
+ * salva estado atual do jogo no buffer com nome do jogador, indicando que a
+ * partida a ser iniciada parte de um jogo salvo
+ *     save_state : estrutura com os parametros do estado do jogo
+ *     nome_save  : recebe nome do save
+ *     load       : indica se novo jogo ou carregamento de jogo salvo
+ */
 void salva_jogo(STATE save_state, char *nome_save, int load)
 {
     FILE *save;
@@ -1100,6 +1402,12 @@ void salva_jogo(STATE save_state, char *nome_save, int load)
     fclose(save);
 }
 
+/*
+ * funcao: printbin
+ * ----------------
+ * salva conteudo do buffer em binario com mesmo nome que o jogador
+ *     nome_save recebe nome do save
+ */
 void printbin(char *nome_save)
 {
     int i;
@@ -1130,17 +1438,31 @@ void printbin(char *nome_save)
         }
         printf("Pontos:\n");
         printf("%d\n",state_buffer.pontuacao);
-        getchar();
+        getch();
     }
     else
     {
         printf("Erro ao ler arquivo.\n");
-        getchar();
+        getch();
     }
     fclose(save);
 }
 
-void load_game(int *pontuacao, char *nome, SUBMARINO *jogador, MERGULHADOR *mergulhadores, INIMIGO *inimigos, TORPEDO *torpedos, int *erro)
+/*
+ * funcao: load_game
+ * -----------------
+ * carrega parametros do jogo salvo no arquivo binario
+ * pontuacao     : recebe pontuacao do jogador
+ * nome          : recebe nome do jogador
+ * jogador       : estrutura com os parametros do jogador
+ * mergulhadores : estrutura com os parametros dos mergulhadores
+ * inimigos      : estrutura com os parametros dos inimigos
+ * torpedos      : estrutura com os parametros dos torpedos
+ * erro          : indica se ocorreu erro no carregamento do jogo salvo
+ */
+void load_game(int *pontuacao, char *nome, SUBMARINO *jogador,
+               MERGULHADOR *mergulhadores, INIMIGO *inimigos, TORPEDO *torpedos,
+               int *erro)
 {
     int i;
     background();
@@ -1170,10 +1492,17 @@ void load_game(int *pontuacao, char *nome, SUBMARINO *jogador, MERGULHADOR *merg
     {
         printf("Erro ao ler arquivo.\n");
         *erro = 1;
-        getchar();
+        getch();
     }
 }
 
+/*
+ * funcao: imprime_ranking
+ * -----------------------
+ * imprime ranking
+ *     pontos : recebe pontuacao final
+ *     nomes  : recebe nome do jogador
+ */
 void imprime_ranking()
 {
     int pontos[RANKINGS] = {0};
@@ -1198,15 +1527,23 @@ void imprime_ranking()
     }
     else
     {
-        printf("Erro ao ler ranking. Comum ocorrer em jogos novos.");
+        printf("Erro ao ler ranking.");
     }
-    getchar();
+    getch();
 }
 
+/*
+ * funcao: carrega_ranking
+ * -----------------------
+ * carrega ranking salvo no arquivo de texto
+ *     nomes   : recebe nome dos jogadores no ranking
+ *     pontos  : recebe pontuacao final dos jogadores no ranking
+ *     posicao : recebe posicao e pontuacao do jogador no ranking
+ */
 int carrega_ranking(char nomes[][TAMANHO_NOME], int *pontos)
 {
     FILE *arq;
-    char posicao[30];
+    char posicao[MAXPOS];
     int i = 0;
     arq = fopen("ranking.txt","r");
     if(arq != NULL)
@@ -1237,6 +1574,16 @@ int carrega_ranking(char nomes[][TAMANHO_NOME], int *pontos)
     }
 }
 
+/*
+ * funcao: salva_ranking
+ * ---------------------
+ * salva ranking em arquivo de texto
+ *     jog_nome   : recebe nome do jogador atual
+ *     jog_pontos : recebe pontuacao final do jogador atual
+ *     pontos     : recebe pontuacao final dos jogadores no ranking
+ *     nomes      : recebe nome dos jogadores no raking
+ *     posjog     : recebe posicao dos jogadores no ranking
+ */
 void salva_ranking(char jog_nome[TAMANHO_NOME], int jog_pontos)
 {
     FILE *arq;
@@ -1263,7 +1610,7 @@ void salva_ranking(char jog_nome[TAMANHO_NOME], int jog_pontos)
             pontos[i] = pontos[i-1];
             strcpy(nomes[i],nomes[i-1]);
         }
-        getchar();
+        getch();
         pontos[i] = jog_pontos;
         strcpy(nomes[i],jog_nome);
         arq = fopen("ranking.txt","w");
