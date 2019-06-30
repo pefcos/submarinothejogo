@@ -532,7 +532,7 @@ void atualiza_oxigenio(SUBMARINO *jogador)
 void tela_inicial(char *nome)
 {
     gotoxy(20, 10);
-    printf("Insira um nome aqui (Maximo 20 caracteres):");
+    printf("Insira um nome aqui (Maximo 19 caracteres):");
     gotoxy(30, 11);
     fflush(stdin);
     fgets(nome, TAMANHO_NOME, stdin);
