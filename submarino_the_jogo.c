@@ -334,7 +334,7 @@ void gameloop(int load)
     int erro = 0;
     int contador = 0;
     int pontuacao = 0;
-    char nome[20] = " ";
+    char nome[TAMANHO_NOME] = " ";
 
     /* inicializacao das variaveis relacionadas aos objetos que podem ser
      * impressos na tela, todas com seus valores iniciais
@@ -531,10 +531,13 @@ void atualiza_oxigenio(SUBMARINO *jogador)
  */
 void tela_inicial(char *nome)
 {
-    gotoxy(30, 10);
-    printf("Insira um nome aqui.");
+    gotoxy(20, 10);
+    printf("Insira um nome aqui (Maximo 20 caracteres):");
     gotoxy(30, 11);
-    gets(nome);
+    fflush(stdin);
+    fgets(nome, TAMANHO_NOME, stdin);
+    if (nome[TAMANHO_NOME] != '\0')
+        nome[TAMANHO_NOME] = '\0';
     if (strcmp(nome, "") == 0)
         strcpy(nome, "jogador");
     clrscr();
@@ -694,10 +697,6 @@ void move_jogador(int *input, SUBMARINO *jogador, TORPEDO *torpedos)
             break;
         case ESPACO:
             lanca_torpedo(torpedos, *jogador);
-            if(!(((*jogador).se_pos.x <= LIMESQ + 1 + torpedos[0].largura) && (*jogador).sentido == 1) && !(((*jogador).se_pos.x+(*jogador).largura+torpedos[0].largura >= LIMDIR) && (*jogador).sentido == -1))
-            {
-
-            }
             break;
         }
         if((*jogador).se_pos.y >= LIMAGUA-2 && (*jogador).se_pos.y <= LIMAGUA+1)
@@ -1008,15 +1007,17 @@ void inicializa_inimigos(INIMIGO *inimigos, MERGULHADOR *mergulhadores)
  * de torpedos na tela
  *     torpedos : estrutura com os parametros dos torpedos
  *     jogador  : estrutura com os parametros do jogador
+ *     lancado  : indica se ocorreu lancamento
  */
 void lanca_torpedo(TORPEDO *torpedos, SUBMARINO jogador)
 {
     int i = 0;
+    int lancado = 0;
     if(jogador.se_pos.y >= LIMAGUA)
     {
-        while(i < TORPEDOS)
+        for(i = 0; i < TORPEDOS; i++)
         {
-            if(torpedos[i].status == 0)
+            if(torpedos[i].status == 0 && lancado == 0)
             {
                 torpedos[i].status = jogador.sentido;
                 torpedos[i].se_pos.y = jogador.se_pos.y + 1;
@@ -1024,12 +1025,12 @@ void lanca_torpedo(TORPEDO *torpedos, SUBMARINO jogador)
                 {
                     torpedos[i].se_pos.x = jogador.se_pos.x + jogador.largura;
                 }
-                else
+                else if (torpedos[i].status == -1)
                 {
                     torpedos[i].se_pos.x = jogador.se_pos.x - torpedos[i].largura;
                 }
+                lancado = 1;
             }
-            i++;
         }
     }
 }
