@@ -1618,7 +1618,7 @@ void salva_ranking(char jog_nome[TAMANHO_NOME], int jog_pontos)
         }
         getch();
         pontos[i] = jog_pontos;
-        strcpy(nomes[i],jog_nome);
+        strcpy(nomes[i],strtok(jog_nome,"."));
         arq = fopen("ranking.txt","w");
         for(i = 0; i < RANKINGS; i++)
         {
