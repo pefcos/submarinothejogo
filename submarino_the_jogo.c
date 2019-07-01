@@ -4,7 +4,7 @@
  *
  * universidade federal do rio grande do sul
  * instituto de informatica
- * disciplina de algoritmos e programaÃ§Ã£o - inf021202
+ * disciplina de algoritmos e programação - inf021202
  * professora dra mara abel
  * turma c 2019/1
  */
@@ -132,7 +132,7 @@ typedef struct inimigo
 /*
  * estrutura: torpedo
  * ------------------
- * parametros dos torpedos lanÃ§ados
+ * parametros dos torpedos lançados
  */
 typedef struct torpedo
 {
@@ -903,7 +903,7 @@ void inicializa_mergulhadores(MERGULHADOR *mergulhadores, INIMIGO *inimigos)
                 mergulhadores[i].se_pos.y = rand () % (LIMBAIXO - LIMCIMA - LIMAGUA) + (LIMCIMA + LIMAGUA);
             }
 
-            /* verifica se coordenada y Ã© igual a outros mergulhadores */
+            /* verifica se coordenada y é igual a outros mergulhadores */
             /* ja inicializados, se sim, nao inicializa o mergulhador  */
             for(j = 0; j < MERGULHADORES; j++)
             {
@@ -915,7 +915,7 @@ void inicializa_mergulhadores(MERGULHADOR *mergulhadores, INIMIGO *inimigos)
                 }
             }
 
-            /* verifica se coordenada y Ã© igual a de submarinos inimigos */
+            /* verifica se coordenada y é igual a de submarinos inimigos */
             /* ja inicializados, se sim, nao inicializa o mergulhador    */
             for(j = 0; j < MERGULHADORES; j++)
             {
@@ -969,7 +969,7 @@ void inicializa_inimigos(INIMIGO *inimigos, MERGULHADOR *mergulhadores)
                 inimigos[i].se_pos.y = rand () % (LIMBAIXO - LIMCIMA - LIMAGUA-1) + (LIMCIMA + LIMAGUA);
             }
 
-            /* verifica se coordenada y Ã© igual a de mergulhadores */
+            /* verifica se coordenada y é igual a de mergulhadores */
             /* ja inicializados, se sim, nao inicializa o inimigo  */
             for(j = 0; j < INIMIGOS; j++)
             {
@@ -981,7 +981,7 @@ void inicializa_inimigos(INIMIGO *inimigos, MERGULHADOR *mergulhadores)
                 }
             }
 
-            /* verifica se coordenada y Ã© igual a de inimigos      */
+            /* verifica se coordenada y é igual a de inimigos      */
             /* ja inicializados, se sim, nao inicializa o inimigo  */
             for(j = 0; j < INIMIGOS; j++)
             {
