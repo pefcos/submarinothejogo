@@ -35,7 +35,7 @@
 #define SAIR 22
 
 /* valores do sleep no gameloop */
-#define SLEEP 38
+#define SLEEP 20
 
 /* valores referentes aos limites do background */
 #define LIMCIMA 3
@@ -785,16 +785,18 @@ void pega_mergulhador(SUBMARINO *jogador, MERGULHADOR *mergulhadores)
     int i;
     for (i = 0; i < MERGULHADORES; i++)
     {
-        if (testa_posicao_megulhador(*jogador, mergulhadores[i]) == 1)
+        if (testa_posicao_megulhador(*jogador, mergulhadores[i]) == 1 &&
+            jogador->carga < CARGA)
         {
             apaga_mergulhador(mergulhadores[i]);
             mergulhadores[i].se_pos.x = 0;
             mergulhadores[i].se_pos.y = 0;
             mergulhadores[i].status = 0;
-            if((*jogador).carga < CARGA)
-                (*jogador).carga++;
+            jogador->carga++;
             desenha_jogador(*jogador);
         }
+        else
+            desenha_jogador(*jogador);
     }
 }
 
