@@ -8,6 +8,9 @@
 
 ## Changelog
 
+[1.1.3]
+ - corrigida funcao de salvamento dos mergulhadores.
+
 [1.1.2]
  - corrigido tamanho de entrada excedente alterando pontuação;
  - corrigido .bin na tela de ranking.
