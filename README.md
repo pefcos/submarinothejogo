@@ -14,7 +14,6 @@
 [1.1.2]
  - corrigido tamanho de entrada excedente alterando pontuação;
  - corrigido .bin na tela de ranking.
- - colocado um arquivo backup, com a versão 1.1.1, caso ocorra alguma falha na reprodução da 1.1.2.
 
 [1.1.1]
 - corrigido bug que permitia jogador não inserir nenhum nome, causando erro no momento de salvar o ranking.
