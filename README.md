@@ -25,10 +25,3 @@
 
 [1.0.0]
 - primeira versão do jogo completo atendendo todos requisitos.
-
-## To Do
-
-- [ ] max 80 colunas
-- [ ] rever getch nao saindo com barra de espaco
-- [ ] max caracteres no nome bloqueando input do usuario
-- [x] impedir nome em branco
